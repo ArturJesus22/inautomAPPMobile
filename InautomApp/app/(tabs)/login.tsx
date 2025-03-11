@@ -175,6 +175,7 @@ const styles = StyleSheet.create({
     logo: {
         width: width * 0.7,
         height: height * 0.12,
+        tintColor: "white",
     },
     contentContainer: {
         flex: 1,
