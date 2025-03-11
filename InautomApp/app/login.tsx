@@ -89,11 +89,11 @@ export default function LoginScreen() {
 
         setIsLoading(true);
 
-        // Simulação de login
+        // Simulação de login bem-sucedido
         setTimeout(() => {
             setIsLoading(false);
-            router.replace('/(tabs)');
-        }, 1500);
+            router.replace('/(tabs)/dashboard');
+        }, 1000);
     };
 
     return (
