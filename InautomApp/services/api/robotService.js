@@ -63,7 +63,7 @@ export const getRobotStats = async () => {
     try {
         console.log('📊 A obter estatísticas dos robôs...');
         const response = await client.get('/api/robot/estatisticas');
-        console.log('✅ Estatísticas recebidas:', response.data);
+        console.log('✅ E\ísticas recebidas:', response.data);
 
         if (response.data) {
             return response.data;
@@ -81,14 +81,14 @@ export const getRobotStats = async () => {
 
         // Retornar estatísticas mockadas como fallback
         return {
-            total: 2,
-            em_erro: 1,
-            em_ciclo: 1,
+            total: 0,
+            em_erro: 0,
+            em_ciclo: 0,
             manutencao_pendente: 0,
             status_distribution: {
-                parado: 1,
+                parado: 0,
                 manual: 0,
-                auto: 1
+                auto: 0
             }
         };
     }

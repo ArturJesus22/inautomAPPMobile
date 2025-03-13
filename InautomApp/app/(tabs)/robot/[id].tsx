@@ -43,10 +43,14 @@ export default function Id() {
     if (PRG_Run === undefined || PRG_Run === null) return '#757575';
 
     switch (PRG_Run) {
-      case 0:
-        return '#ff0404';
-      case 1:
-        return '#2eff00';
+      case 0: // PARADO
+        return '#757575';
+      case 1: // MANUAL
+        return '#2196F3';
+      case 2: // AUTO
+        return '#4CAF50';
+      default:
+        return '#757575';
     }
   };
 
@@ -218,7 +222,7 @@ export default function Id() {
             <View style={styles.infoRow}>
               <ThemedText style={styles.infoLabel}>Modo Eco:</ThemedText>
               <View style={[styles.statusIndicator, {
-                backgroundColor: robot.Eco_Mode_On ? '#4CAF50' : '#757575'
+                backgroundColor: robot.Eco_Mode_On ? '#5084f5' : '#757575'
               }]}>
                 <ThemedText style={styles.statusIndicatorText}>
                   {robot.Eco_Mode_On ? 'Ativado' : 'Desativado'}

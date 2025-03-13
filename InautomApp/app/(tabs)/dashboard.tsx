@@ -6,6 +6,8 @@ import { useState, useEffect } from 'react';
 import { router } from 'expo-router';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { getRobots, getRobotStats } from '../../services/api/robotService';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
 
 const { width } = Dimensions.get('window');
 
@@ -28,7 +30,7 @@ interface Robot {
 interface RobotStats {
   total: number;
   em_erro: number;
-  em_ciclo: number;
+  em_funcionamento: number;
   manutencao_pendente: number;
   status_distribution: {
     parado: number;
@@ -43,27 +45,23 @@ interface RobotCardProps {
 }
 
 const RobotCard = ({ robot, index }: RobotCardProps) => {
-  const getStatusColor = (estado: number): string => {
-    switch (estado) {
-      case 0: // PARADO
-        return '#757575';
-      case 1: // MANUAL
-        return '#2196F3';
-      case 2: // AUTO
-        return '#4CAF50';
+  const getStatusColor = (PRG_Run: number): string => {
+    switch (PRG_Run) {
+      case 0:
+        return '#ff0000';
+      case 1:
+        return '#008002';
       default:
         return '#757575';
     }
   };
 
-  const getStatusText = (estado: number): string => {
-    switch (estado) {
+  const getStatusText = (PRG_Run: number): string => {
+    switch (PRG_Run) {
       case 0:
         return 'Parado';
       case 1:
-        return 'Manual';
-      case 2:
-        return 'Auto';
+        return 'A Trabalhar';
       default:
         return 'Desconhecido';
     }
@@ -75,25 +73,25 @@ const RobotCard = ({ robot, index }: RobotCardProps) => {
           style={styles.cardContainer}
       >
         <TouchableOpacity
-            style={[styles.card, { borderLeftColor: getStatusColor(robot.Estado) }]}
+            style={[styles.card, { borderLeftColor: getStatusColor(robot.PRG_Run) }]}
             onPress={() => router.push(`/robot/${robot.ID}` as any)}
         >
           <View style={styles.cardHeader}>
             <ThemedText style={styles.robotName}>{robot.Modelo}</ThemedText>
-            <ThemedView style={[styles.statusBadge, { backgroundColor: getStatusColor(robot.Estado) }]}>
-              <ThemedText style={styles.statusText}>{getStatusText(robot.Estado)}</ThemedText>
+            <ThemedView style={[styles.statusBadge, { backgroundColor: getStatusColor(robot.PRG_Run) }]}>
+              <ThemedText style={styles.statusText}>{getStatusText(robot.PRG_Run)}</ThemedText>
             </ThemedView>
           </View>
 
           <View style={styles.cardContent}>
             <View style={styles.metric}>
-              <IconSymbol name="thermometer" size={20} color="#666" />
-              <ThemedText style={styles.metricText}>--°C</ThemedText>
+              <IconSymbol name="terminal" size={20} color="#666" />
+              <ThemedText style={styles.metricText}>{robot.Programa_Ativo || 'Nenhum'}</ThemedText>
             </View>
 
             <View style={styles.metric}>
-              <IconSymbol name="chart.line.uptrend.xyaxis" size={20} color="#666" />
-              <ThemedText style={styles.metricText}>--% Disp.</ThemedText>
+              <IconSymbol name="wrench.fill" size={20} color="#666" />
+              <ThemedText style={styles.metricText}>{robot.Aviso_Manutencao ? 'Necessária' : 'Ok'}</ThemedText>
             </View>
 
             <View style={styles.metric}>
@@ -102,8 +100,8 @@ const RobotCard = ({ robot, index }: RobotCardProps) => {
             </View>
 
             <View style={styles.metric}>
-              <IconSymbol name="bolt" size={20} color="#666" />
-              <ThemedText style={styles.metricText}>-- kWh</ThemedText>
+              <IconSymbol name="leaf.fill" size={20} color="#666" />
+              <ThemedText style={styles.metricText}>{robot.Eco_Mode_On ? 'Eco Ativo' : 'Eco Inativo'}</ThemedText>
             </View>
 
             {robot.IN_Error > 0 && (
@@ -125,25 +123,48 @@ const RobotCard = ({ robot, index }: RobotCardProps) => {
   );
 };
 
+
+
 export default function DashboardScreen() {
   const [robots, setRobots] = useState<Robot[]>([]);
   const [stats, setStats] = useState<RobotStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [username, setUsername] = useState<string>('');
+
 
   useEffect(() => {
+    const getUserInfo = async () => {
+      try {
+        const userJson = await AsyncStorage.getItem('user');
+        if (userJson) {
+          const userData = JSON.parse(userJson);
+          // Assumindo que o nome do usuário está em userData.username
+          setUsername(userData.username || '');
+        }
+      } catch (error) {
+        console.error('Erro ao obter dados do utilizador:', error);
+      }
+    };
     const fetchData = async () => {
       try {
         setLoading(true);
+        await getUserInfo();
 
         // Buscar dados dos robôs
         const robotsData = await getRobots();
+        console.log('🤖 Robôs recebidos da API:', robotsData);
         setRobots(robotsData);
 
-        // Buscar estatísticas
-        const statsData = await getRobotStats();
-        setStats(statsData);
+        // Calcular estatísticas com base nos dados recebidos
+        const calculatedStats = {
+          total: robotsData.length,
+          em_erro: robotsData.filter(r => r.IN_Error === 1).length,
+          em_funcionamento: robotsData.filter(r => r.PRG_Run === 1).length,
+        };
 
+        console.log('📊 Estatísticas calculadas:', calculatedStats);
+        setStats(calculatedStats);
         setError(null);
       } catch (err) {
         console.error('Erro ao carregar dados:', err);
@@ -155,6 +176,7 @@ export default function DashboardScreen() {
 
     fetchData();
   }, []);
+
 
   if (loading) {
     return (
@@ -211,33 +233,34 @@ export default function DashboardScreen() {
         <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
           <ThemedView style={styles.header}>
             <ThemedText style={styles.title}>Dashboard</ThemedText>
-            <ThemedText style={styles.subtitle}>Monitoramento de Robôs</ThemedText>
+            <ThemedText style={styles.subtitle}>Bem-Vindo{username ? `, ${username}` : ''}
+            </ThemedText>
           </ThemedView>
 
           {stats && (
               <View style={styles.statsContainer}>
                 <View style={styles.statCard}>
-                  <IconSymbol name="checkmark.circle" size={24} color="#4CAF50" />
+                  <IconSymbol name="network" size={24} color="#f44336" />
                   <ThemedText style={styles.statNumber}>
-                    {stats.status_distribution.auto}
+                    {stats.total}
                   </ThemedText>
-                  <ThemedText style={styles.statLabel}>Ativos</ThemedText>
+                  <ThemedText style={styles.statLabel}>Total</ThemedText>
                 </View>
 
                 <View style={styles.statCard}>
-                  <IconSymbol name="exclamationmark.triangle" size={24} color="#f44336" />
+                  <IconSymbol name="checkmark.circle.fill" size={24} color="#4CAF50" />
+                  <ThemedText style={styles.statNumber}>
+                    {stats.em_funcionamento}
+                  </ThemedText>
+                  <ThemedText style={styles.statLabel}>A Trabalhar</ThemedText>
+                </View>
+
+                <View style={styles.statCard}>
+                  <IconSymbol name="exclamationmark.triangle.fill" size={24} color="#FF9800" />
                   <ThemedText style={styles.statNumber}>
                     {stats.em_erro}
                   </ThemedText>
                   <ThemedText style={styles.statLabel}>Em Erro</ThemedText>
-                </View>
-
-                <View style={styles.statCard}>
-                  <IconSymbol name="gear" size={24} color="#FF9800" />
-                  <ThemedText style={styles.statNumber}>
-                    {stats.manutencao_pendente}
-                  </ThemedText>
-                  <ThemedText style={styles.statLabel}>Manutenção</ThemedText>
                 </View>
               </View>
           )}
