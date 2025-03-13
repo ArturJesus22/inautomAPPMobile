@@ -1,70 +1,40 @@
-import { StyleSheet, ScrollView, Dimensions, TouchableOpacity, View, SafeAreaView } from 'react-native';
+import { StyleSheet, ScrollView, Dimensions, TouchableOpacity, View, SafeAreaView, ActivityIndicator } from 'react-native';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { IconSymbol } from '@/components/ui/IconSymbol';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { router } from 'expo-router';
 import Animated, { FadeInDown } from 'react-native-reanimated';
-
-// Mock data based on your database structure
-const mockRobots = [
-  {
-    id: 2,
-    nome_robo: 'RoboX',
-    identificador: 'RX-1234567',
-    estado: 'Manutenção',
-    temperatura: 45.2,
-    ultima_atualizacao: '2025-03-11 13:04:07',
-    endereco: '192.168.1.101',
-    tempo_desmolde: 2.5,
-    tempo_ciclo: 0,
-    disponibilidade: 98.5,
-    pecas_produzidas: 1250,
-    pecas_rejeitadas: 5,
-    amostras: 100,
-    energia_consumida: 120.5,
-    alarmes_ativos: 0,
-    empresa_id: 3
-  },
-  {
-    id: 3,
-    nome_robo: 'NEO70',
-    identificador: 'NEO-1234567',
-    estado: 'Pronto',
-    temperatura: 21.00,
-    ultima_atualizacao: '2025-03-10 17:55:07',
-    endereco: '192.168.1.102',
-    tempo_desmolde: 0,
-    tempo_ciclo: 0,
-    disponibilidade: 96,
-    pecas_produzidas: 26074,
-    pecas_rejeitadas: 0.5,
-    amostras: 19727,
-    energia_consumida: 6708.42,
-    alarmes_ativos: 0,
-    empresa_id: 4
-  }
-];
+import { getRobots, getRobotStats } from '../../services/api/robotService';
 
 const { width } = Dimensions.get('window');
 
+// Atualizando a interface para corresponder ao modelo do backend
 interface Robot {
-  id: number;
-  nome_robo: string;
-  identificador: string;
-  estado: string;
-  temperatura: number;
-  ultima_atualizacao: string;
-  endereco: string;
-  tempo_desmolde: number;
-  tempo_ciclo: number;
-  disponibilidade: number;
-  pecas_produzidas: number;
-  pecas_rejeitadas: number;
-  amostras: number;
-  energia_consumida: number;
-  alarmes_ativos: number;
-  empresa_id: number;
+  ID: number;
+  Modelo: string;
+  SN: string;
+  Estado: number; // 0-PARADO 1-MANUAL 2-AUTO
+  IN_Error: number;
+  PRG_Run: number;
+  IP: string;
+  Aviso_Manutencao: number;
+  Contador_Ciclos_Geral: number;
+  Ultima_Atualizacao: string;
+  Empresa_ID: number;
+  // Outros campos que possam existir no seu modelo
+}
+
+interface RobotStats {
+  total: number;
+  em_erro: number;
+  em_ciclo: number;
+  manutencao_pendente: number;
+  status_distribution: {
+    parado: number;
+    manual: number;
+    auto: number;
+  };
 }
 
 interface RobotCardProps {
@@ -73,124 +43,210 @@ interface RobotCardProps {
 }
 
 const RobotCard = ({ robot, index }: RobotCardProps) => {
-  const getStatusColor = (estado: string): string => {
+  const getStatusColor = (estado: number): string => {
     switch (estado) {
-      case 'Pronto':
-        return '#4CAF50';
-      case 'Em Uso':
+      case 0: // PARADO
+        return '#757575';
+      case 1: // MANUAL
         return '#2196F3';
-      case 'Erro':
-        return '#f44336';
-      case 'Manutenção':
-        return '#FF9800';
+      case 2: // AUTO
+        return '#4CAF50';
       default:
         return '#757575';
     }
   };
 
+  const getStatusText = (estado: number): string => {
+    switch (estado) {
+      case 0:
+        return 'Parado';
+      case 1:
+        return 'Manual';
+      case 2:
+        return 'Auto';
+      default:
+        return 'Desconhecido';
+    }
+  };
+
   return (
-    <Animated.View
-      entering={FadeInDown.delay(index * 200)}
-      style={styles.cardContainer}
-    >
-      <TouchableOpacity
-        style={[styles.card, { borderLeftColor: getStatusColor(robot.estado) }]}
-        onPress={() => router.push(`/robot/${robot.id}` as any)}
+      <Animated.View
+          entering={FadeInDown.delay(index * 200)}
+          style={styles.cardContainer}
       >
-        <View style={styles.cardHeader}>
-          <ThemedText style={styles.robotName}>{robot.nome_robo}</ThemedText>
-          <ThemedView style={[styles.statusBadge, { backgroundColor: getStatusColor(robot.estado) }]}>
-            <ThemedText style={styles.statusText}>{robot.estado}</ThemedText>
-          </ThemedView>
-        </View>
-
-        <View style={styles.cardContent}>
-          <View style={styles.metric}>
-            <IconSymbol name="thermometer" size={20} color="#666" />
-            <ThemedText style={styles.metricText}>{robot.temperatura}°C</ThemedText>
+        <TouchableOpacity
+            style={[styles.card, { borderLeftColor: getStatusColor(robot.Estado) }]}
+            onPress={() => router.push(`/robot/${robot.ID}` as any)}
+        >
+          <View style={styles.cardHeader}>
+            <ThemedText style={styles.robotName}>{robot.Modelo}</ThemedText>
+            <ThemedView style={[styles.statusBadge, { backgroundColor: getStatusColor(robot.Estado) }]}>
+              <ThemedText style={styles.statusText}>{getStatusText(robot.Estado)}</ThemedText>
+            </ThemedView>
           </View>
 
-          <View style={styles.metric}>
-            <IconSymbol name="chart.line.uptrend.xyaxis" size={20} color="#666" />
-            <ThemedText style={styles.metricText}>{robot.disponibilidade}%</ThemedText>
-          </View>
-
-          <View style={styles.metric}>
-            <IconSymbol name="cube.box" size={20} color="#666" />
-            <ThemedText style={styles.metricText}>{robot.pecas_produzidas}</ThemedText>
-          </View>
-
-          <View style={styles.metric}>
-            <IconSymbol name="bolt" size={20} color="#666" />
-            <ThemedText style={styles.metricText}>{robot.energia_consumida} kWh</ThemedText>
-          </View>
-
-          {robot.alarmes_ativos > 0 && (
-            <View style={styles.alarmBadge}>
-              <IconSymbol name="exclamationmark.triangle" size={16} color="#fff" />
-              <ThemedText style={styles.alarmText}>{robot.alarmes_ativos}</ThemedText>
+          <View style={styles.cardContent}>
+            <View style={styles.metric}>
+              <IconSymbol name="thermometer" size={20} color="#666" />
+              <ThemedText style={styles.metricText}>--°C</ThemedText>
             </View>
-          )}
-        </View>
 
-        <View style={styles.cardFooter}>
-          <ThemedText style={styles.idText}>ID: {robot.identificador}</ThemedText>
-          <ThemedText style={styles.updateText}>
-            Última atualização: {new Date(robot.ultima_atualizacao).toLocaleTimeString()}
-          </ThemedText>
-        </View>
-      </TouchableOpacity>
-    </Animated.View>
+            <View style={styles.metric}>
+              <IconSymbol name="chart.line.uptrend.xyaxis" size={20} color="#666" />
+              <ThemedText style={styles.metricText}>--% Disp.</ThemedText>
+            </View>
+
+            <View style={styles.metric}>
+              <IconSymbol name="cube.box" size={20} color="#666" />
+              <ThemedText style={styles.metricText}>{robot.Contador_Ciclos_Geral || 0} peças</ThemedText>
+            </View>
+
+            <View style={styles.metric}>
+              <IconSymbol name="bolt" size={20} color="#666" />
+              <ThemedText style={styles.metricText}>-- kWh</ThemedText>
+            </View>
+
+            {robot.IN_Error > 0 && (
+                <View style={styles.alarmBadge}>
+                  <IconSymbol name="exclamationmark.triangle" size={16} color="#fff" />
+                  <ThemedText style={styles.alarmText}>{robot.IN_Error}</ThemedText>
+                </View>
+            )}
+          </View>
+
+          <View style={styles.cardFooter}>
+            <ThemedText style={styles.idText}>SN: {robot.SN}</ThemedText>
+            <ThemedText style={styles.updateText}>
+              Última atualização: {new Date(robot.Ultima_Atualizacao).toLocaleTimeString()}
+            </ThemedText>
+          </View>
+        </TouchableOpacity>
+      </Animated.View>
   );
 };
 
 export default function DashboardScreen() {
-  const [robots] = useState(mockRobots);
+  const [robots, setRobots] = useState<Robot[]>([]);
+  const [stats, setStats] = useState<RobotStats | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+
+        // Buscar dados dos robôs
+        const robotsData = await getRobots();
+        setRobots(robotsData);
+
+        // Buscar estatísticas
+        const statsData = await getRobotStats();
+        setStats(statsData);
+
+        setError(null);
+      } catch (err) {
+        console.error('Erro ao carregar dados:', err);
+        setError('Falha ao carregar dados. Tente novamente.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  if (loading) {
+    return (
+        <SafeAreaView style={styles.safeArea}>
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#2196F3" />
+            <ThemedText style={styles.loadingText}>Carregando dados...</ThemedText>
+          </View>
+        </SafeAreaView>
+    );
+  }
+
+  if (error) {
+    return (
+        <SafeAreaView style={styles.safeArea}>
+          <View style={styles.errorContainer}>
+            <IconSymbol name="exclamationmark.triangle" size={48} color="#f44336" />
+            <ThemedText style={styles.errorText}>{error}</ThemedText>
+            <TouchableOpacity
+                style={styles.retryButton}
+                onPress={() => {
+                  setLoading(true);
+                  setError(null);
+                  getRobots()
+                      .then(data => {
+                        setRobots(data);
+                        return getRobotStats();
+                      })
+                      .then(data => {
+                        setStats(data);
+                        setLoading(false);
+                      })
+                      .catch(err => {
+                        console.error(err);
+                        setError('Falha ao carregar dados. Tente novamente.');
+                        setLoading(false);
+                      });
+                }}
+            >
+              <ThemedText style={styles.retryText}>Tentar Novamente</ThemedText>
+            </TouchableOpacity>
+          </View>
+        </SafeAreaView>
+    );
+  }
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <View style={styles.topBar}>
-        <View style={styles.topBarContent}>
-          <IconSymbol name="chevron.left" size={20} color="#333" />
-        </View>
-      </View>
-      <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
-        <ThemedView style={styles.header}>
-          <ThemedText style={styles.title}>Dashboard</ThemedText>
-          <ThemedText style={styles.subtitle}>Monitoramento de Robôs</ThemedText>
-        </ThemedView>
-
-        <View style={styles.statsContainer}>
-          <View style={styles.statCard}>
-            <IconSymbol name="checkmark.circle" size={24} color="#4CAF50" />
-            <ThemedText style={styles.statNumber}>
-              {robots.filter(r => r.estado === 'Pronto').length}
-            </ThemedText>
-            <ThemedText style={styles.statLabel}>Ativos</ThemedText>
-          </View>
-
-          <View style={styles.statCard}>
-            <IconSymbol name="exclamationmark.triangle" size={24} color="#f44336" />
-            <ThemedText style={styles.statNumber}>
-              {robots.reduce((sum, r) => sum + r.alarmes_ativos, 0)}
-            </ThemedText>
-            <ThemedText style={styles.statLabel}>Alarmes</ThemedText>
-          </View>
-
-          <View style={styles.statCard}>
-            <IconSymbol name="gear" size={24} color="#FF9800" />
-            <ThemedText style={styles.statNumber}>
-              {robots.filter(r => r.estado === 'Manutenção').length}
-            </ThemedText>
-            <ThemedText style={styles.statLabel}>Manutenção</ThemedText>
+      <SafeAreaView style={styles.safeArea}>
+        <View style={styles.topBar}>
+          <View style={styles.topBarContent}>
+            <IconSymbol name="chevron.left" size={20} color="#333" />
           </View>
         </View>
+        <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
+          <ThemedView style={styles.header}>
+            <ThemedText style={styles.title}>Dashboard</ThemedText>
+            <ThemedText style={styles.subtitle}>Monitoramento de Robôs</ThemedText>
+          </ThemedView>
 
-        {robots.map((robot, index) => (
-          <RobotCard key={robot.id} robot={robot} index={index} />
-        ))}
-      </ScrollView>
-    </SafeAreaView>
+          {stats && (
+              <View style={styles.statsContainer}>
+                <View style={styles.statCard}>
+                  <IconSymbol name="checkmark.circle" size={24} color="#4CAF50" />
+                  <ThemedText style={styles.statNumber}>
+                    {stats.status_distribution.auto}
+                  </ThemedText>
+                  <ThemedText style={styles.statLabel}>Ativos</ThemedText>
+                </View>
+
+                <View style={styles.statCard}>
+                  <IconSymbol name="exclamationmark.triangle" size={24} color="#f44336" />
+                  <ThemedText style={styles.statNumber}>
+                    {stats.em_erro}
+                  </ThemedText>
+                  <ThemedText style={styles.statLabel}>Em Erro</ThemedText>
+                </View>
+
+                <View style={styles.statCard}>
+                  <IconSymbol name="gear" size={24} color="#FF9800" />
+                  <ThemedText style={styles.statNumber}>
+                    {stats.manutencao_pendente}
+                  </ThemedText>
+                  <ThemedText style={styles.statLabel}>Manutenção</ThemedText>
+                </View>
+              </View>
+          )}
+
+          {robots.map((robot, index) => (
+              <RobotCard key={robot.ID} robot={robot} index={index} />
+          ))}
+        </ScrollView>
+      </SafeAreaView>
   );
 }
 
@@ -198,6 +254,39 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: '#f5f5f5',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    marginTop: 16,
+    fontSize: 16,
+    color: '#666',
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  errorText: {
+    marginTop: 16,
+    fontSize: 16,
+    color: '#666',
+    textAlign: 'center',
+  },
+  retryButton: {
+    marginTop: 20,
+    backgroundColor: '#2196F3',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 8,
+  },
+  retryText: {
+    color: 'white',
+    fontWeight: 'bold',
   },
   topBar: {
     backgroundColor: '#f5f5f5',

@@ -27,6 +27,8 @@ import { router } from 'expo-router';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { IconSymbol } from '@/components/ui/IconSymbol';
+import authService from '../services/api/authService';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const { width, height } = Dimensions.get('window');
 
@@ -81,7 +83,7 @@ export default function LoginScreen() {
         opacity: interpolate(scanLine.value, [0, 0.5, 1], [0, 0.5, 0]),
     }));
 
-    const handleLogin = () => {
+    const handleLogin = async () => {
         if (!email || !password) {
             showToast('Preencha todos os campos para continuar.');
             return;
@@ -89,11 +91,15 @@ export default function LoginScreen() {
 
         setIsLoading(true);
 
-        // Simulação de login bem-sucedido
-        setTimeout(() => {
-            setIsLoading(false);
+        try {
+            const userData = await authService.login(email, password);
+            console.log('Usuário logado:', userData);
             router.replace('/(tabs)/dashboard');
-        }, 1000);
+        } catch (error) {
+            showToast('Erro ao fazer login.');
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     return (
