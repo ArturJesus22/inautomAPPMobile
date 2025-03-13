@@ -31,7 +31,7 @@ const apiClient = axios.create({
 apiClient.interceptors.request.use(
     async (config) => {
         try {
-            // Obter dados do usuário (onde o token está armazenado)
+            // Obter dados do user (onde o token está armazenado)
             const userJson = await AsyncStorage.getItem('user');
             if (userJson) {
                 const user = JSON.parse(userJson);
@@ -70,7 +70,7 @@ apiClient.interceptors.response.use(
         // Tratar erro 500
         if (error.response && error.response.status === 500) {
             console.error('🔥 Erro interno do servidor. Detalhes:', error.response.data);
-            // Você pode tentar novamente ou mostrar uma mensagem amigável ao usuário
+            //  pode tentar novamente ou mostrar uma mensagem amigável ao user
         }
 
         return Promise.reject(error);

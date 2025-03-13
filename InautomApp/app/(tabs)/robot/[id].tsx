@@ -3,12 +3,13 @@ import { View, StyleSheet, SafeAreaView, ScrollView, ActivityIndicator, Touchabl
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { IconSymbol } from '@/components/ui/IconSymbol';
-import { getRobotDetails } from '../../services/api/robotService';
+import { getRobotDetails } from '../../../services/api/robotService';
 import { useLocalSearchParams, router } from 'expo-router';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
-export default function RobotDetailScreen() {
+export default function Id() {
   const { id } = useLocalSearchParams();
+  const robotId = typeof id === 'string' ? id : Array.isArray(id) ? id[0] : '';
   const [robot, setRobot] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -17,34 +18,35 @@ export default function RobotDetailScreen() {
     const fetchRobotDetails = async () => {
       try {
         setLoading(true);
-        const data = await getRobotDetails(id);
+        console.log(`🔍 Buscando detalhes do robô ID: ${robotId}`);
+        const data = await getRobotDetails(robotId);
+        console.log('✅ Detalhes recebidos:', data);
         setRobot(data);
         setError(null);
       } catch (err) {
-        console.error('Erro ao carregar detalhes do robô:', err);
+        console.error('❌ Erro ao carregar detalhes do robô:', err);
         setError('Falha ao carregar detalhes do robô.');
       } finally {
         setLoading(false);
       }
     };
 
-    if (id) {
+    if (robotId) {
       fetchRobotDetails();
+    } else {
+      setError('ID do robô não especificado');
+      setLoading(false);
     }
-  }, [id]);
+  }, [robotId]);
 
-  const getStatusColor = (estado) => {
-    if (estado === undefined || estado === null) return '#757575';
+  const getStatusColor = (PRG_Run) => {
+    if (PRG_Run === undefined || PRG_Run === null) return '#757575';
 
-    switch (estado) {
-      case 0: // PARADO
-        return '#757575';
-      case 1: // MANUAL
-        return '#2196F3';
-      case 2: // AUTO
-        return '#4CAF50';
-      default:
-        return '#757575';
+    switch (PRG_Run) {
+      case 0:
+        return '#ff0404';
+      case 1:
+        return '#2eff00';
     }
   };
 
@@ -85,7 +87,7 @@ export default function RobotDetailScreen() {
                 onPress={() => {
                   setLoading(true);
                   setError(null);
-                  getRobotDetails(id)
+                  getRobotDetails(robotId)
                       .then(data => {
                         setRobot(data);
                         setLoading(false);

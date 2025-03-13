@@ -93,7 +93,7 @@ export default function LoginScreen() {
 
         try {
             const userData = await authService.login(email, password);
-            console.log('Usuário logado:', userData);
+            console.log('User logado:', userData);
             router.replace('/(tabs)/dashboard');
         } catch (error) {
             showToast('Erro ao fazer login.');
