@@ -1,12 +1,12 @@
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const API_URL = 'http://192.168.1.168/inautom/backend/web';
+const API_URL = 'http://192.168.1.75/inautom/backend/web'; //TROCAR 7 PARA 8
 
 const authService = {
         login: async (username, password) => {
             try {
-                console.log('Tentando login com:', username);
+                console.log('A tentar login com:', username);
 
                 // Validar inputs
                 if (!username || !password) {

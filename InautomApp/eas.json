@@ -1,0 +1,48 @@
+{
+  "cli": {
+    "version": ">= 5.9.1"
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "android": {
+        "buildType": "apk",
+        "gradleCommand": ":app:assembleDebug"
+      }
+    },
+    "preview": {
+      "distribution": "internal",
+      "android": {
+        "buildType": "apk",
+        "gradleCommand": ":app:assembleRelease"
+      }
+    },
+    "production": {
+      "android": {
+        "buildType": "apk"
+      }
+    },
+    "amazon": {
+      "distribution": "store",
+      "android": {
+        "buildType": "apk",
+        "gradleCommand": ":app:assembleRelease",
+        "releaseChannel": "amazon"
+      }
+    }
+  },
+  "submit": {
+    "production": {
+      "ios": {
+        "appleId": "seu-apple-id@email.com",
+        "ascAppId": "seu-app-id",
+        "appleTeamId": "seu-team-id"
+      },
+      "android": {
+        "serviceAccountKeyPath": "./path-to-your-google-service-account.json",
+        "track": "production"
+      }
+    }
+  }
+} 

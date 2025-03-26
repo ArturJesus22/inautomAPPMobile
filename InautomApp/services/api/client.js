@@ -7,12 +7,12 @@ const getBaseURL = () => {
     if (__DEV__) {
         const platformUrls = {
             android: 'http://10.0.2.2/inautom/backend/web',
-            ios: 'http://192.168.1.168/inautom/backend/web',
-            default: 'http://192.168.1.168/inautom/backend/web'
+            ios: 'http://192.168.1.75/inautom/backend/web',
+            default: 'http://192.168.1.75/inautom/backend/web'
         };
         return platformUrls[Platform.OS] || platformUrls.default;
     }
-    return 'https://192.168.1.168/inautom/backend/web';
+    return 'https://192.168.1.75/inautom/backend/web';
 };
 
 const API_BASE_URL = getBaseURL();
