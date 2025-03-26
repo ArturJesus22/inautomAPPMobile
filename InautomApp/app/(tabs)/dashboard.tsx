@@ -11,7 +11,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const { width } = Dimensions.get('window');
 
-// Atualizando a interface para corresponder ao modelo do backend
+// Atualizar a interface para corresponder ao modelo do backend
 interface Robot {
   ID: number;
   Modelo: string;
@@ -183,7 +183,7 @@ export default function DashboardScreen() {
         <SafeAreaView style={styles.safeArea}>
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color="#2196F3" />
-            <ThemedText style={styles.loadingText}>Carregando dados...</ThemedText>
+            <ThemedText style={styles.loadingText}>A carregar dados...</ThemedText>
           </View>
         </SafeAreaView>
     );

@@ -8,7 +8,7 @@ const profileService = {
    */
   getProfile: async () => {
     try {
-      console.log('📱 Buscando dados do perfil...');
+      console.log('📱 A buscar dados do perfil...');
       
       const response = await apiClient.get('/api/perfil/get-perfil');
       
@@ -41,7 +41,7 @@ const profileService = {
    */
   updateProfile: async (profileData) => {
     try {
-      console.log('📱 Atualizando dados do perfil:', profileData);
+      console.log('📱 A atualizar dados do perfil:', profileData);
       
       const response = await apiClient.post('/api/perfil/atualizar-perfil', profileData);
       

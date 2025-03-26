@@ -113,7 +113,7 @@ export default function ProfileScreen() {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#E31E24" />
-        <ThemedText style={styles.loadingText}>Carregando perfil...</ThemedText>
+        <ThemedText style={styles.loadingText}>A carregar perfil...</ThemedText>
       </View>
     );
   }
@@ -288,7 +288,7 @@ export default function ProfileScreen() {
                 {updateLoading ? (
                   <ActivityIndicator size="small" color="#fff" />
                 ) : (
-                  <ThemedText style={styles.buttonText}>Salvar</ThemedText>
+                  <ThemedText style={styles.buttonText}>Guardar</ThemedText>
                 )}
               </TouchableOpacity>
             </View>

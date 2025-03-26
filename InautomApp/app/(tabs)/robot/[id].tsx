@@ -18,7 +18,7 @@ export default function Id() {
     const fetchRobotDetails = async () => {
       try {
         setLoading(true);
-        console.log(`🔍 Buscando detalhes do robô ID: ${robotId}`);
+        console.log(`🔍 A buscar detalhes do robô ID: ${robotId}`);
         const data = await getRobotDetails(robotId);
         console.log('✅ Detalhes recebidos:', data);
         setRobot(data);
@@ -74,7 +74,7 @@ export default function Id() {
         <SafeAreaView style={styles.safeArea}>
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color="#2196F3" />
-            <ThemedText style={styles.loadingText}>Carregando detalhes do robô...</ThemedText>
+            <ThemedText style={styles.loadingText}>A carregar detalhes do robô...</ThemedText>
           </View>
         </SafeAreaView>
     );

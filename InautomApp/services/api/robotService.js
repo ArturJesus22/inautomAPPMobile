@@ -35,7 +35,7 @@ const getMockRobots = () => {
 export const getRobots = async () => {
     try {
         // Tentar endpoint com parâmetro de ordenação explícito para evitar o erro
-        console.log('🤖 Tentando obter lista de robôs...');
+        console.log('🤖 A tentar obter lista de robôs...');
         const response = await client.get('/api/robot?sort=-ID'); // Ordenar por ID decrescente
         console.log('✅ Robôs recebidos:', response.data);
 
@@ -46,12 +46,12 @@ export const getRobots = async () => {
         console.error('❌ Erro ao obter robôs:', error.message);
 
         // Se falhar, use dados mockados
-        console.warn('⚠️ Usando dados mockados como fallback');
+        console.warn('⚠️ A utilizar dados mockados como fallback');
         return getMockRobots();
     }
 
     // Se a resposta for vazia
-    console.warn('⚠️ Resposta vazia. Usando dados mockados.');
+    console.warn('⚠️ Resposta vazia. A utilizar dados mockados.');
     return getMockRobots();
 };
 
